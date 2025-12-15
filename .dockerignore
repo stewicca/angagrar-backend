@@ -42,3 +42,6 @@ docker-compose.yml
 *.test
 *.out
 vendor/
+
+# Docker volumes
+postgres_data/

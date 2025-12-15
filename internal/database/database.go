@@ -45,6 +45,8 @@ func AutoMigrate() error {
 		&models.User{},
 		&models.Budget{},
 		&models.Transaction{},
+		&models.Conversation{},
+		&models.Message{},
 	)
 
 	if err != nil {

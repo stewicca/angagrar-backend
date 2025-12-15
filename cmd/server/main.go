@@ -26,16 +26,31 @@ func main() {
 
 	db := database.GetDB()
 
+	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)
 	transactionRepo := repositories.NewTransactionRepository(db)
+	budgetRepo := repositories.NewBudgetRepository(db)
+	conversationRepo := repositories.NewConversationRepository(db)
+	messageRepo := repositories.NewMessageRepository(db)
 
+	// Initialize services
 	authService := services.NewAuthService(userRepo, cfg.JWTSecret)
 	userService := services.NewUserService(userRepo)
 	transactionService := services.NewTransactionService(transactionRepo)
+	openAIService := services.NewOpenAIService(cfg)
+	conversationService := services.NewConversationService(
+		conversationRepo,
+		messageRepo,
+		budgetRepo,
+		openAIService,
+	)
 
+	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	budgetHandler := handlers.NewBudgetHandler(budgetRepo)
+	conversationHandler := handlers.NewConversationHandler(conversationService)
 
 	r := gin.Default()
 
@@ -76,6 +91,22 @@ func main() {
 		{
 			transactions.POST("", transactionHandler.CreateTransaction)
 			transactions.GET("", transactionHandler.GetTransactions)
+		}
+
+		conversations := api.Group("/conversations")
+		conversations.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			conversations.POST("/start", conversationHandler.StartConversation)
+			conversations.POST("/:sessionId/messages", conversationHandler.SendMessage)
+			conversations.GET("/:sessionId/history", conversationHandler.GetConversationHistory)
+			conversations.POST("/:sessionId/reset", conversationHandler.ResetConversation)
+		}
+
+		budgets := api.Group("/budgets")
+		budgets.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+		{
+			budgets.GET("", budgetHandler.GetUserBudgets)
+			budgets.PATCH("/:id", budgetHandler.UpdateBudget)
 		}
 	}
 

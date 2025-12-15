@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -20,6 +21,12 @@ type Config struct {
 
 	// JWT
 	JWTSecret string
+
+	// OpenAI
+	OpenAIAPIKey    string
+	OpenAIModel     string
+	OpenAIMaxTokens int
+	OpenAITemp      float32
 }
 
 func LoadConfig() *Config {
@@ -40,12 +47,40 @@ func LoadConfig() *Config {
 
 		// JWT
 		JWTSecret: getEnv("JWT_SECRET", "3RBN1skwbkcF3jp31mVJOuQ0AW38Ut"),
+
+		// OpenAI
+		OpenAIAPIKey:    getEnv("OPENAI_API_KEY", ""),
+		OpenAIModel:     getEnv("OPENAI_MODEL", "gpt-4o-mini"),
+		OpenAIMaxTokens: getEnvInt("OPENAI_MAX_TOKENS", 500),
+		OpenAITemp:      getEnvFloat("OPENAI_TEMPERATURE", 0.7),
 	}
 }
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+
+	return defaultValue
+}
+
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		var intValue int
+		if _, err := fmt.Sscanf(value, "%d", &intValue); err == nil {
+			return intValue
+		}
+	}
+
+	return defaultValue
+}
+
+func getEnvFloat(key string, defaultValue float32) float32 {
+	if value := os.Getenv(key); value != "" {
+		var floatValue float32
+		if _, err := fmt.Sscanf(value, "%f", &floatValue); err == nil {
+			return floatValue
+		}
 	}
 
 	return defaultValue
