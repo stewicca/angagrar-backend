@@ -1,0 +1,43 @@
+services:
+  angagrar-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: angagrar-backend
+    environment:
+      DB_HOST: angagrar-postgres
+      DB_PORT: 5432
+      DB_USER: angagrar_user
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: angagrar_db
+      APP_PORT: ${APP_PORT:-8080}
+      JWT_SECRET: ${JWT_SECRET:-3RBN1skwbkcF3jp31mVJOuQ0AW38Ut}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_MAX_TOKENS: ${OPENAI_MAX_TOKENS:-1000}
+      OPENAI_TEMPERATURE: ${OPENAI_TEMPERATURE:-0.7}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+    networks:
+      - angagrar-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:alpine
+    container_name: angagrar-postgres
+    environment:
+      POSTGRES_USER: angagrar_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: angagrar_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./.postgres_data:/var/lib/postgresql/data
+    networks:
+      - angagrar-network
+    restart: unless-stopped
+
+networks:
+  angagrar-network:
+    driver: bridge
